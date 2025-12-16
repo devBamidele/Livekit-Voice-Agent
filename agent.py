@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
+import json
 
 from livekit import agents
-from livekit.agents import AgentSession, Agent, RoomInputOptions
+from livekit.agents import AgentSession, Agent, RoomInputOptions, function_tool
 from livekit.plugins import (
     openai,
     noise_cancellation,
@@ -9,32 +10,64 @@ from livekit.plugins import (
 
 load_dotenv(".env.local")
 
+# Store case metadata globally to share between function and entrypoint
+case_data: dict[str, str | None] = {"question": None, "difficulty": None}
+
+
 class Assistant(Agent):
     def __init__(self) -> None:
-        super().__init__(
-            instructions="""You are an interview coach conducting a consulting interview practice session.
+        # Load instructions from external file
+        with open("instructions.txt", "r") as f:
+            instructions = f.read()
 
-Follow this conversation flow:
-1. First, greet the user: "Hey Pat, how are you doing today?"
-2. Wait for them to respond
-3. After they respond, ask: "Tell me about yourself"
-4. After they answer, ask the follow-up: "Why do you want to work in consulting?"
-5. Continue with natural follow-up questions based on their responses
+        super().__init__(instructions=instructions)
 
-Persona:
-- Be professional yet friendly
-- Show genuine interest in their answers
-- Ask clarifying questions when needed
-- Provide constructive feedback occasionally
-"""
-        )
+    @function_tool()
+    async def set_case_metadata(
+        self,
+        question: str,
+        difficulty: str
+    ):
+        """Called when presenting the market sizing case question to set metadata.
+
+        Args:
+            question: The complete market sizing question being asked
+            difficulty: The difficulty level - must be one of: easy, medium, or hard
+        """
+        # Store in global dictionary for the entrypoint to access
+        case_data["question"] = question
+        case_data["difficulty"] = difficulty
+
+        return {
+            "status": "success",
+            "message": f"Case metadata set: {difficulty} difficulty"
+        }
 
 async def entrypoint(ctx: agents.JobContext):
+    # Track if metadata has been set
+    metadata_set = False
+
     session = AgentSession(
         llm=openai.realtime.RealtimeModel(
             voice="alloy"
         )
     )
+
+    @session.on("function_tools_executed")
+    async def on_function_executed(event):
+        """Listen for function calls and set room metadata"""
+        nonlocal metadata_set
+
+        if not metadata_set and case_data["question"] and case_data["difficulty"]:
+            # Set room metadata
+            metadata = json.dumps({
+                "caseQuestion": case_data["question"],
+                "difficulty": case_data["difficulty"]
+            })
+
+            await ctx.room.local_participant.set_metadata(metadata)
+            print(f"[METADATA SET] Question: {case_data['question']}, Difficulty: {case_data['difficulty']}")
+            metadata_set = True
 
     await session.start(
         room=ctx.room,
