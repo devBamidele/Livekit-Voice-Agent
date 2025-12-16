@@ -1,25 +1,36 @@
 # LiveKit Voice Agent
 
-A real-time voice interview coach that simulates realistic consulting interviews. Built with [LiveKit](https://livekit.io/) and OpenAI's Realtime API, this agent conducts challenging interview practice sessions with natural voice conversation.
+A real-time market sizing case interview practice agent. Built with [LiveKit](https://livekit.io/) and OpenAI's Realtime API, this agent simulates a McKinsey interviewer conducting realistic market sizing cases with professional pressure and strategic probing.
 
 ## What It Does
 
-This agent acts as an **experienced ex-consultant interviewer** who conducts structured interview practice with professional pressure and realistic challenges. Unlike typical friendly coaching tools, it maintains high standards, challenges vague answers, shows impatience, and demands clarity—just like a real consulting interviewer.
+This agent acts as an **experienced McKinsey interviewer** who conducts market sizing case interviews. It delivers case questions (easy, medium, or hard), evaluates candidate responses through strategic probing, and maintains professional interview standards with realistic time pressure.
 
 ### Interview Flow
 
-1. **Greeting** - "How are you doing today?"
-2. **Warm-up** - "Tell me about yourself" (90 seconds)
-3. **Fit Questions** - "Why consulting?" with probing follow-ups
-4. **Behavioral Questions** - Leadership, failure, persuasion scenarios
-5. **Case Interview** (Optional) - Candidate-led or interviewer-led cases
+1. **Opening (30 seconds)** - Agent presents a randomly selected market sizing question
+2. **Framework Identification (1-2 minutes)** - Listens for candidate's approach and probes if unclear
+3. **Calculation Phase** - Monitors progress, prompts if silent, challenges assumptions
+4. **Sanity Check** - Asks candidate to validate their final answer
+5. **Session End** - 10-minute automatic timeout
+
+The agent automatically sets room metadata (case question and difficulty) when presenting the question, enabling external systems to track interview progress.
+
+### Market Sizing Questions
+
+**Easy:** Smartphones sold in US annually, gas stations in LA, pizzas consumed in NYC
+
+**Medium:** Starbucks revenue in Chicago, diapers used in US daily, EV charging station market in CA
+
+**Hard:** Global meal kit subscription market, autonomous taxi revenue in SF by 2030, AI engineer demand by 2028
 
 ### Agent Behavior
 
-- **No Praise Mode**: Responds with neutral acknowledgments ("Okay", "Got it") rather than validation
-- **Pressure Testing**: Interrupts rambling, challenges vague answers, shows skepticism
-- **Realistic Challenges**: Uses phrases like "What's your point?", "Be specific", "Speed up"
-- **Time Pressure**: Enforces time limits and shows impatience when appropriate
+- **Neutral Tone**: No praise or validation—uses brief acknowledgments ("Okay", "Got it")
+- **Strategic Probing**: Asks "Why is that reasonable?" for weak assumptions, "What's your point?" for rambling
+- **Information Withholding**: Only clarifies scope/geography when explicitly asked
+- **Time Pressure**: Prompts "Speed up" or "You have two minutes remaining" based on conversation flow
+- **Silent Prevention**: Intervenes if candidate is silent for 30-45 seconds during calculations
 
 ## Prerequisites
 
@@ -66,28 +77,28 @@ docker run --env-file .env.local livekit-voice-agent
 ## Project Structure
 
 ```
-├── agent.py              # Main agent implementation (~40 lines)
-├── instructions.txt      # Agent behavior and interview coaching rules
+├── agent.py              # Main agent with set_case_metadata function tool
+├── instructions.txt      # Market sizing interview protocol and questions
 ├── pyproject.toml        # Python dependencies
 ├── livekit.toml          # LiveKit configuration
 ├── Dockerfile            # Container deployment
 └── .env.local            # Environment credentials (gitignored)
 ```
 
-## Key Technologies
+## Key Features
 
-- **LiveKit Agents SDK** - Real-time voice communication with plugin support for Anthropic, Cartesia, Deepgram, OpenAI, and Silero
-- **OpenAI Realtime API** - Natural voice conversation with "alloy" voice model
-- **Noise Cancellation** - BVC (Blind Voice Cancellation) for clear audio
-- **Python 3.13+** with UV package manager
+- **Function Calling**: Uses OpenAI's function calling to capture case metadata (question + difficulty) and set it as LiveKit room metadata
+- **Real-time Voice**: Natural conversation flow with OpenAI Realtime API using "alloy" voice
+- **Noise Cancellation**: BVC (Blind Voice Cancellation) for clear audio quality
+- **Automatic Metadata**: Sets room metadata when case question is presented, enabling external tracking systems
 
 ## Customization
 
-Edit [instructions.txt](instructions.txt) to modify the agent's:
-- Interview style and tone
-- Question sequence and flow
-- Challenge phrases and feedback style
-- Time limits and pacing
+Edit [instructions.txt](instructions.txt) to modify:
+- Market sizing questions (add your own easy/medium/hard questions)
+- Interview flow and timing cues
+- Probing phrases and pressure tactics
+- Behavioral guidelines (neutrality, interruption timing, etc.)
 
 ## License
 
