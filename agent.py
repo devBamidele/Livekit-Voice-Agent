@@ -54,20 +54,28 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     @session.on("function_tools_executed")
-    async def on_function_executed(event):
+    def on_function_executed(event):
         """Listen for function calls and set room metadata"""
         nonlocal metadata_set
 
-        if not metadata_set and case_data["question"] and case_data["difficulty"]:
-            # Set room metadata
-            metadata = json.dumps({
-                "caseQuestion": case_data["question"],
-                "difficulty": case_data["difficulty"]
-            })
+        async def set_metadata():
+            nonlocal metadata_set
 
-            await ctx.room.local_participant.set_metadata(metadata)
-            print(f"[METADATA SET] Question: {case_data['question']}, Difficulty: {case_data['difficulty']}")
-            metadata_set = True
+            if not metadata_set and case_data["question"] and case_data["difficulty"]:
+                # Set room metadata
+                metadata = json.dumps({
+                    "caseQuestion": case_data["question"],
+                    "difficulty": case_data["difficulty"]
+                })
+
+                await ctx.room.local_participant.set_metadata(metadata)
+                print(f"[METADATA SET] Question: {case_data['question']}, Difficulty: {case_data['difficulty']}")
+                metadata_set = True
+                
+
+        # Create async task as required by LiveKit
+        import asyncio
+        asyncio.create_task(set_metadata())
 
     await session.start(
         room=ctx.room,
