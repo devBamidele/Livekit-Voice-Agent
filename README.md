@@ -12,7 +12,7 @@ This agent acts as an **experienced McKinsey interviewer** who conducts market s
 2. **Framework Identification (1-2 minutes)** - Listens for candidate's approach and probes if unclear
 3. **Calculation Phase** - Monitors progress, prompts if silent, challenges assumptions
 4. **Sanity Check** - Asks candidate to validate their final answer
-5. **Session End** - 10-minute automatic timeout
+5. **Session End** - 5-minute automatic timeout
 
 The agent automatically sets room metadata (case question and difficulty) when presenting the question, enabling external systems to track interview progress.
 
@@ -29,7 +29,7 @@ The agent automatically sets room metadata (case question and difficulty) when p
 - **Neutral Tone**: No praise or validation—uses brief acknowledgments ("Okay", "Got it")
 - **Strategic Probing**: Asks "Why is that reasonable?" for weak assumptions, "What's your point?" for rambling
 - **Information Withholding**: Only clarifies scope/geography when explicitly asked
-- **Time Pressure**: Prompts "Speed up" or "You have two minutes remaining" based on conversation flow
+- **Time Pressure**: Prompts "Speed up" or "You have one minute remaining" based on conversation flow
 - **Silent Prevention**: Intervenes if candidate is silent for 30-45 seconds during calculations
 
 ## Prerequisites
