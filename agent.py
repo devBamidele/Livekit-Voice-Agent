@@ -1,7 +1,9 @@
+
 from dotenv import load_dotenv
 import json
+import os
 
-from livekit import agents
+from livekit import agents, api
 from livekit.agents import AgentSession, Agent, RoomInputOptions, function_tool
 from livekit.plugins import (
     openai,
@@ -47,6 +49,13 @@ async def entrypoint(ctx: agents.JobContext):
     # Track if metadata has been set
     metadata_set = False
 
+    # Initialize LiveKit API for room metadata updates
+    livekit_api = api.LiveKitAPI(
+        url=os.getenv("LIVEKIT_URL"),
+        api_key=os.getenv("LIVEKIT_API_KEY"),
+        api_secret=os.getenv("LIVEKIT_API_SECRET")
+    )
+
     session = AgentSession(
         llm=openai.realtime.RealtimeModel(
             voice="alloy"
@@ -62,16 +71,24 @@ async def entrypoint(ctx: agents.JobContext):
             nonlocal metadata_set
 
             if not metadata_set and case_data["question"] and case_data["difficulty"]:
-                # Set room metadata
+                # Set room metadata using Room Service API
                 metadata = json.dumps({
                     "caseQuestion": case_data["question"],
                     "difficulty": case_data["difficulty"]
                 })
 
-                await ctx.room.local_participant.set_metadata(metadata)
-                print(f"[METADATA SET] Question: {case_data['question']}, Difficulty: {case_data['difficulty']}")
-                metadata_set = True
-                
+                try:
+                    await livekit_api.room.update_room_metadata(
+                        api.UpdateRoomMetadataRequest(
+                            room=ctx.room.name,
+                            metadata=metadata
+                        )
+                    )
+                    print(f"[ROOM METADATA SET] Question: {case_data['question']}, Difficulty: {case_data['difficulty']}")
+                    metadata_set = True
+                except Exception as e:
+                    print(f"[ERROR] Failed to set room metadata: {e}")
+
 
         # Create async task as required by LiveKit
         import asyncio
